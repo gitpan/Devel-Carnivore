@@ -11,7 +11,7 @@ use vars qw/$OUT @EXPORT @ISA $NAME $VERSION/;
 use base "Exporter";
 @EXPORT = qw(watch unwatch);
 
-$VERSION = 0.08;
+$VERSION = 0.09;
 
 # By default print to STDERR
 $OUT = \*STDERR;
@@ -34,8 +34,8 @@ sub test_no_hashref($) {
 # tie $hashref to Devel::Carnivore::Tie::Hash
 # optionally specify a name
 # for internal use: a custom carp level may be specified. look at Carp.pm for documentation
-sub watch($;$$) {
-	my($hashref,$name,$custom_carplevel) = @_;
+sub watch($;$) {
+	my($hashref,$name) = @_;
 	
 	# this module only works with hashrefs
 	croak "variable is not a hash reference" if test_no_hashref $hashref;
@@ -46,11 +46,8 @@ sub watch($;$$) {
 	
 	croak "can't watch a variable which is already tied" if tied %$hashref;
 	
-	if($custom_carplevel) { # this should make the carp message point at line which invoked the actual tying
-		local $Carp::CarpLevel;
-		$Carp::CarpLevel = $custom_carplevel;
-		print $Devel::Carnivore::OUT "# variable is now under observation\n";
-	}
+	# print a comment that we start watching
+	print $Devel::Carnivore::OUT "# variable is now under observation\n";
                 
 	tie %$hashref, 'Devel::Carnivore::Tie::Hash', $name;
 	# %$hashref is now empty
@@ -84,7 +81,7 @@ sub unwatch($) {
 sub UNIVERSAL::Watch : ATTR(HASH) {
 	my ($package, $symbol, $hashref, $attr, $name, $phase) = @_;  
         
-	watch $hashref, $name, 1; # 1 -> custom carp level
+	watch $hashref, $name
 }
  
 # install Watch as a universal attribute for scalars
@@ -124,7 +121,7 @@ sub STORE {
 	croak "You may only store hashrefs within a scalar under observation by Devel::Carnivore."
 		if Devel::Carnivore::test_no_hashref($value);
 	
-	Devel::Carnivore::watch $value, $self->{name}, 1; # 2 -> custom carp level
+	Devel::Carnivore::watch $value, $self->{name};
 	
 	${$self->{scalar}} = $value
 }
@@ -155,9 +152,20 @@ sub STORE {
 	# "myHashKey" changed from "someValue" to "someOtherValue"
 	$message .= qq{"$key" changed from "$old_value" to "$value" };
 	
+	
+	# $Carp::CarpLevel may be set to influence the output.
+	# This sucks bad!!!. First, CarpLevel is deprecated but setting CarpInternal to our 
+	# caller does not seem to work, second, setting CarpLevel to 1 seems to be the right
+	# thing but Perl 5.6.1 (and below???) doesnt like it.
+	
+	local $Carp::CarpLevel;
+	if($] >= 5.008) {
+		$Carp::CarpLevel = 1;
+	}
+	
 	# we print this using a function available via the Carp module
 	# it automatically adds information about where this method was called
-	# $Carp::CarpLevel may be set to influence the output.
+	
 	print $Devel::Carnivore::OUT Carp::shortmess($message);
 	
 	# ahh, and finally we behave like a normal hash.
