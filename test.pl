@@ -1,7 +1,7 @@
 package My;
 use strict;
 use Tie::Hash;
-use Test::Simple tests => 103;
+use Test::Simple tests => 107;
 
 #use lib "../";
 use constant CLASS => "Devel::Carnivore::Tie::Hash";
@@ -16,13 +16,14 @@ my %factories = (
 
 my @test_cases = ("Perl", "Larry", {}, []);
 
-foreach my $method_name (keys %factories) { # 4 tests + 16 tests
+foreach my $method_name (keys %factories) { # 8 tests + 16 tests
 
 	my $factory = $factories{$method_name};
 
 	my $obj = Factory->execute($method_name);
 	# testing whether the objects are tied to the right class
-	ok( (tied %$obj) -> isa(CLASS ), "tieing works via $factory");
+	ok(tied %$obj, "Object is tied via $factory.");
+	ok( (tied %$obj) -> isa(CLASS ), "Object is tied to right class via $factory");
 	
 	my $filename = ".test.test";
 	
@@ -61,14 +62,14 @@ to a file called '.test.test'. Please make sure I have the neccessary permission
 			my $test_case = quotemeta $test_cases[$i];
 			ok(/$current_filename line \d+$/, "output tells the right filename via $factory");
 			ok(/(\d+)$/, "line number found");
-			ok($1 == $correct_line_number_cool, "output tells the right line number via $factory");
+			ok($1 == $correct_line_number_cool, "output tells the right line number via $factory: $1 == $correct_line_number_cool");
 			ok(/"cool" changed from "$last" to "$test_case"/, "output tells the right key name and values: $i");
 			$last = $test_case;
 			$i++;
 		}
 		elsif(/neat/) { # lines where neat changed 
 			ok(/(\d+)$/, "line number found");
-			ok($1 == $correct_line_number_neat, "output tells the right line number with 1 extra indirection: ");
+			ok($1 == $correct_line_number_neat, "output tells the right line number with 1 extra indirection: $1 == $correct_line_number_neat");
 		} else {
 			die "there shouldn't be any other lines"	
 		}

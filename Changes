@@ -23,3 +23,8 @@ Revision history for Perl extension Devel::Carnivore.
 	- added even more tests + plus some finishing touches. Well
 	  the docs suck. At least there are some. But I'll write better
 	  ones soon ;).
+	  
+0.08  Son Aug 19 21:09:00 2002
+	- added a test whether an object is tied (not only whether) its tied
+	  to the right class
+	  and added debugging output to the line number tests

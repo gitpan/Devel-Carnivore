@@ -11,7 +11,7 @@ use vars qw/$OUT @EXPORT @ISA $NAME $VERSION/;
 use base "Exporter";
 @EXPORT = qw(watch unwatch);
 
-$VERSION = 0.07;
+$VERSION = 0.08;
 
 # By default print to STDERR
 $OUT = \*STDERR;
